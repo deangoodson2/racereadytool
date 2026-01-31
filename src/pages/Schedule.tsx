@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,12 @@ import {
   Share2, 
   Search, 
   Filter, 
-  Clock, 
   MapPin,
   ChevronDown,
   User,
-  Users
+  Users,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 import Header from "@/components/landing/Header";
 import {
@@ -23,32 +24,113 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// Mock data representing parsed meet events
-const mockEvents = [
-  { id: 1, time: "9:00 AM", event: "50 Yard Freestyle", heat: 3, lane: 4, athlete: "Sarah Johnson", team: "Dolphins", location: "Pool A" },
-  { id: 2, time: "9:15 AM", event: "100 Yard Backstroke", heat: 2, lane: 5, athlete: "Mike Chen", team: "Dolphins", location: "Pool A" },
-  { id: 3, time: "9:30 AM", event: "50 Yard Butterfly", heat: 1, lane: 3, athlete: "Sarah Johnson", team: "Dolphins", location: "Pool A" },
-  { id: 4, time: "10:00 AM", event: "200 Yard IM", heat: 4, lane: 6, athlete: "Emma Wilson", team: "Sharks", location: "Pool B" },
-  { id: 5, time: "10:30 AM", event: "100 Yard Freestyle", heat: 2, lane: 4, athlete: "Sarah Johnson", team: "Dolphins", location: "Pool A" },
-  { id: 6, time: "11:00 AM", event: "50 Yard Breaststroke", heat: 3, lane: 2, athlete: "Mike Chen", team: "Dolphins", location: "Pool A" },
-  { id: 7, time: "11:30 AM", event: "100 Yard Butterfly", heat: 1, lane: 5, athlete: "Jake Thompson", team: "Sharks", location: "Pool B" },
-  { id: 8, time: "12:00 PM", event: "200 Yard Freestyle", heat: 2, lane: 3, athlete: "Emma Wilson", team: "Sharks", location: "Pool B" },
-  { id: 9, time: "1:00 PM", event: "4x100 Relay", heat: 1, lane: 4, athlete: "Dolphins Team", team: "Dolphins", location: "Pool A" },
-  { id: 10, time: "1:30 PM", event: "4x50 Medley Relay", heat: 2, lane: 5, athlete: "Sharks Team", team: "Sharks", location: "Pool B" },
-];
-
-const athletes = ["All Athletes", "Sarah Johnson", "Mike Chen", "Emma Wilson", "Jake Thompson"];
-const teams = ["All Teams", "Dolphins", "Sharks"];
+import { getMeet, getLatestMeet, Meet, MeetEvent } from "@/lib/api/meets";
 
 const SchedulePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const meetId = searchParams.get("meetId");
+  
+  const [meet, setMeet] = useState<Meet | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAthletes, setSelectedAthletes] = useState<string[]>(["Sarah Johnson"]);
-  const [selectedTeams, setSelectedTeams] = useState<string[]>(["Dolphins"]);
+  const [selectedAthletes, setSelectedAthletes] = useState<string[]>(["All Athletes"]);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>(["All Teams"]);
 
-  const filteredEvents = mockEvents.filter(event => {
-    const matchesSearch = event.event.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  useEffect(() => {
+    async function loadMeet() {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        let meetData: Meet | null = null;
+        
+        if (meetId) {
+          meetData = await getMeet(meetId);
+        } else {
+          meetData = await getLatestMeet();
+        }
+        
+        if (!meetData) {
+          setError("No meet found. Please upload a meet sheet first.");
+        } else {
+          setMeet(meetData);
+        }
+      } catch (err) {
+        console.error("Error loading meet:", err);
+        setError("Failed to load meet data");
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadMeet();
+  }, [meetId]);
+
+  // Extract unique athletes and teams from the meet data
+  const { athletes, teams, flattenedEvents } = useMemo(() => {
+    if (!meet?.events) {
+      return { athletes: ["All Athletes"], teams: ["All Teams"], flattenedEvents: [] };
+    }
+    
+    const athleteSet = new Set<string>();
+    const teamSet = new Set<string>();
+    const events: Array<{
+      id: string;
+      eventNumber: number | null;
+      eventName: string;
+      athlete: string;
+      team: string;
+      heat: number;
+      lane: number;
+      seedTime: string;
+    }> = [];
+    
+    meet.events.forEach((event) => {
+      if (event.athletes && event.athletes.length > 0) {
+        event.athletes.forEach((athlete, idx) => {
+          if (athlete.name) {
+            athleteSet.add(athlete.name);
+            if (athlete.team) teamSet.add(athlete.team);
+            
+            events.push({
+              id: `${event.id}-${idx}`,
+              eventNumber: event.eventNumber,
+              eventName: event.eventName,
+              athlete: athlete.name,
+              team: athlete.team || "Unknown",
+              heat: athlete.heat || 1,
+              lane: athlete.lane || 0,
+              seedTime: athlete.seedTime || "",
+            });
+          }
+        });
+      } else {
+        // Event with no parsed athletes - show the event itself
+        events.push({
+          id: event.id,
+          eventNumber: event.eventNumber,
+          eventName: event.eventName,
+          athlete: "See full event",
+          team: "Unknown",
+          heat: 1,
+          lane: 0,
+          seedTime: "",
+        });
+      }
+    });
+    
+    return {
+      athletes: ["All Athletes", ...Array.from(athleteSet).sort()],
+      teams: ["All Teams", ...Array.from(teamSet).sort()],
+      flattenedEvents: events,
+    };
+  }, [meet]);
+
+  const filteredEvents = flattenedEvents.filter(event => {
+    const matchesSearch = event.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           event.athlete.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesAthlete = selectedAthletes.includes("All Athletes") || 
@@ -88,6 +170,47 @@ const SchedulePage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-12 h-12 text-ocean animate-spin mb-4" />
+            <p className="text-muted-foreground">Loading meet data...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !meet) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
+        <Header />
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <Card className="rounded-2xl border-0 shadow-warm">
+            <CardContent className="p-12 text-center">
+              <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">{error || "No meet found"}</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Upload a meet sheet to get started
+              </p>
+              <Button 
+                onClick={() => navigate("/upload")}
+                className="bg-coral hover:bg-coral-dark text-white rounded-xl"
+              >
+                Upload Meet Sheet
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
       <Header />
@@ -106,10 +229,10 @@ const SchedulePage = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Regional Championship 2024
+              {meet.fileName.replace('.pdf', '')}
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              January 29, 2026 • Aquatic Center
+              {new Date(meet.createdAt).toLocaleDateString()} • {meet.events.length} events parsed
             </p>
           </div>
           
@@ -143,11 +266,11 @@ const SchedulePage = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="rounded-xl border-border/50">
                     <User className="w-4 h-4 mr-2" />
-                    Athletes
+                    Athletes ({athletes.length - 1})
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48">
+                <DropdownMenuContent className="w-48 max-h-60 overflow-auto">
                   {athletes.map((athlete) => (
                     <DropdownMenuCheckboxItem
                       key={athlete}
@@ -164,11 +287,11 @@ const SchedulePage = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="rounded-xl border-border/50">
                     <Users className="w-4 h-4 mr-2" />
-                    Teams
+                    Teams ({teams.length - 1})
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48">
+                <DropdownMenuContent className="w-48 max-h-60 overflow-auto">
                   {teams.map((team) => (
                     <DropdownMenuCheckboxItem
                       key={team}
@@ -211,11 +334,11 @@ const SchedulePage = () => {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{filteredEvents.length}</span> events
+            Showing <span className="font-medium text-foreground">{filteredEvents.length}</span> entries
           </p>
           <Button variant="ghost" size="sm" className="text-muted-foreground">
             <Filter className="w-4 h-4 mr-1" />
-            Sort by Time
+            Sort by Event
           </Button>
         </div>
 
@@ -231,28 +354,39 @@ const SchedulePage = () => {
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="flex items-start gap-4">
-                    <div className={`text-center min-w-[60px] ${index === 0 ? 'text-coral' : 'text-muted-foreground'}`}>
-                      <p className="font-mono text-lg font-semibold">{event.time.split(' ')[0]}</p>
-                      <p className="text-xs">{event.time.split(' ')[1]}</p>
+                    <div className={`text-center min-w-[50px] ${index === 0 ? 'text-coral' : 'text-muted-foreground'}`}>
+                      {event.eventNumber && (
+                        <>
+                          <p className="font-mono text-lg font-semibold">#{event.eventNumber}</p>
+                        </>
+                      )}
                     </div>
                     
                     <div>
-                      <h3 className="font-semibold text-foreground">{event.event}</h3>
+                      <h3 className="font-semibold text-foreground">{event.eventName}</h3>
                       <p className="text-sm text-muted-foreground">{event.athlete}</p>
+                      {event.team !== "Unknown" && (
+                        <p className="text-xs text-muted-foreground">{event.team}</p>
+                      )}
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 ml-[76px] md:ml-0">
-                    <Badge variant="outline" className="text-xs">
-                      Heat {event.heat}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      Lane {event.lane}
-                    </Badge>
-                    <Badge variant="secondary" className="text-xs bg-sand">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {event.location}
-                    </Badge>
+                  <div className="flex items-center gap-2 ml-[66px] md:ml-0">
+                    {event.heat > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        Heat {event.heat}
+                      </Badge>
+                    )}
+                    {event.lane > 0 && (
+                      <Badge variant="outline" className="text-xs">
+                        Lane {event.lane}
+                      </Badge>
+                    )}
+                    {event.seedTime && (
+                      <Badge variant="secondary" className="text-xs bg-sand">
+                        {event.seedTime}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>

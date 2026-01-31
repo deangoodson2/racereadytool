@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Upload, FileText, CheckCircle, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import Header from "@/components/landing/Header";
+import { uploadMeetPdf, parseMeetPdf } from "@/lib/api/meets";
 
 type UploadState = "idle" | "uploading" | "processing" | "success" | "error";
 
@@ -16,28 +17,38 @@ const UploadPage = () => {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
 
-  const simulateUpload = async (file: File) => {
+  const handleUpload = async (file: File) => {
     setFileName(file.name);
     setUploadState("uploading");
     setProgress(0);
 
-    // Simulate upload progress
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      setProgress(i);
-    }
+    try {
+      // Simulate progress during upload
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => Math.min(prev + 20, 90));
+      }, 200);
 
-    setUploadState("processing");
-    
-    // Simulate processing
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setUploadState("success");
-    
-    // Navigate to schedule view after a brief delay
-    setTimeout(() => {
-      navigate("/schedule");
-    }, 1000);
+      // Upload the PDF
+      const { meetId, fileUrl } = await uploadMeetPdf(file);
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      setUploadState("processing");
+
+      // Parse the PDF with Firecrawl
+      await parseMeetPdf(meetId, fileUrl);
+
+      setUploadState("success");
+
+      // Navigate to schedule view with the meet ID
+      setTimeout(() => {
+        navigate(`/schedule?meetId=${meetId}`);
+      }, 1000);
+    } catch (err) {
+      console.error("Upload error:", err);
+      setError(err instanceof Error ? err.message : "Upload failed");
+      setUploadState("error");
+    }
   };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -53,7 +64,7 @@ const UploadPage = () => {
         setUploadState("error");
         return;
       }
-      simulateUpload(file);
+      handleUpload(file);
     }
   }, []);
 
@@ -139,7 +150,7 @@ const UploadPage = () => {
                 
                 <p className="font-medium text-foreground mb-2">{fileName}</p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {uploadState === "uploading" ? "Uploading..." : "Processing your meet sheet..."}
+                  {uploadState === "uploading" ? "Uploading..." : "Processing your meet sheet with AI..."}
                 </p>
                 
                 <Progress value={uploadState === "processing" ? 100 : progress} className="max-w-xs mx-auto" />
