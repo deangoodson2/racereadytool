@@ -14,7 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          athletes: Json | null
+          created_at: string
+          event_name: string
+          event_number: number | null
+          id: string
+          meet_id: string
+          raw_text: string | null
+        }
+        Insert: {
+          athletes?: Json | null
+          created_at?: string
+          event_name: string
+          event_number?: number | null
+          id?: string
+          meet_id: string
+          raw_text?: string | null
+        }
+        Update: {
+          athletes?: Json | null
+          created_at?: string
+          event_name?: string
+          event_number?: number | null
+          id?: string
+          meet_id?: string
+          raw_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_meet_id_fkey"
+            columns: ["meet_id"]
+            isOneToOne: false
+            referencedRelation: "meets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meets: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          file_name: string
+          file_url: string | null
+          id: string
+          parsed_events: Json | null
+          raw_content: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          file_name: string
+          file_url?: string | null
+          id?: string
+          parsed_events?: Json | null
+          raw_content?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          file_name?: string
+          file_url?: string | null
+          id?: string
+          parsed_events?: Json | null
+          raw_content?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
