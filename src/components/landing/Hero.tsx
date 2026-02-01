@@ -1,8 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, Users, FileCheck } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Hero = () => {
+  const { toast } = useToast();
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleDemoAction = (action: string) => {
+    toast({
+      title: `${action} - Demo`,
+      description: "This feature will be available once you upload a real meet PDF.",
+    });
+  };
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-sand via-white to-ocean/10 py-20 px-4">
       {/* Background decoration */}
@@ -34,7 +48,12 @@ const Hero = () => {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="px-8 py-6 text-lg rounded-xl border-2 border-ocean/30 hover:bg-ocean/10">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="px-8 py-6 text-lg rounded-xl border-2 border-ocean/30 hover:bg-ocean/10"
+                onClick={() => scrollToSection("how-it-works")}
+              >
                 See How It Works
               </Button>
             </div>
@@ -96,10 +115,19 @@ const Hero = () => {
               </div>
               
               <div className="mt-4 pt-4 border-t border-border/50 flex gap-2">
-                <Button size="sm" className="flex-1 bg-coral hover:bg-coral-dark text-white rounded-lg">
+                <Button 
+                  size="sm" 
+                  className="flex-1 bg-coral hover:bg-coral-dark text-white rounded-lg"
+                  onClick={() => handleDemoAction("Download PDF")}
+                >
                   Download PDF
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1 rounded-lg border-ocean/30">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1 rounded-lg border-ocean/30"
+                  onClick={() => handleDemoAction("Share Link")}
+                >
                   Share Link
                 </Button>
               </div>

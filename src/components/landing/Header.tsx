@@ -2,9 +2,25 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { toast } = useToast();
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    element?.scrollIntoView({ behavior: "smooth" });
+    setMobileMenuOpen(false);
+  };
+
+  const handleLogin = () => {
+    toast({
+      title: "Coming Soon",
+      description: "User authentication will be available soon. For now, try uploading a meet PDF!",
+    });
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/50">
@@ -18,19 +34,31 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a 
+            href="#features" 
+            onClick={(e) => scrollToSection(e, "features")}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
             Features
           </a>
-          <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a 
+            href="#how-it-works" 
+            onClick={(e) => scrollToSection(e, "how-it-works")}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
             How It Works
           </a>
-          <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a 
+            href="#pricing" 
+            onClick={(e) => scrollToSection(e, "pricing")}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
             Pricing
           </a>
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" className="text-muted-foreground">
+          <Button variant="ghost" className="text-muted-foreground" onClick={handleLogin}>
             Log In
           </Button>
           <Link to="/upload">
@@ -60,28 +88,28 @@ const Header = () => {
             <a 
               href="#features" 
               className="text-muted-foreground hover:text-foreground transition-colors py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => scrollToSection(e, "features")}
             >
               Features
             </a>
             <a 
               href="#how-it-works" 
               className="text-muted-foreground hover:text-foreground transition-colors py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => scrollToSection(e, "how-it-works")}
             >
               How It Works
             </a>
             <a 
               href="#pricing" 
               className="text-muted-foreground hover:text-foreground transition-colors py-2"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => scrollToSection(e, "pricing")}
             >
               Pricing
             </a>
           </nav>
           
           <div className="flex flex-col gap-3">
-            <Button variant="ghost" className="w-full">
+            <Button variant="ghost" className="w-full" onClick={handleLogin}>
               Log In
             </Button>
             <Link to="/upload" className="w-full">
