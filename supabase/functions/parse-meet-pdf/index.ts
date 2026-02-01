@@ -16,6 +16,76 @@ interface ParsedEvent {
   rawText: string;
 }
 
+function extractJsonFromResponse(content: string): { events: ParsedEvent[] } | null {
+  // Try to extract JSON from response, handling truncation
+  let jsonContent = content.trim();
+  
+  // Remove markdown code blocks if present
+  if (jsonContent.startsWith('```json')) {
+    jsonContent = jsonContent.slice(7);
+  } else if (jsonContent.startsWith('```')) {
+    jsonContent = jsonContent.slice(3);
+  }
+  if (jsonContent.endsWith('```')) {
+    jsonContent = jsonContent.slice(0, -3);
+  }
+  jsonContent = jsonContent.trim();
+
+  // Try direct parse first
+  try {
+    return JSON.parse(jsonContent);
+  } catch {
+    // Response may be truncated, try to fix it
+  }
+
+  // Find where events array might have been truncated and try to close it
+  const eventsMatch = jsonContent.match(/"events"\s*:\s*\[/);
+  if (!eventsMatch) {
+    return null;
+  }
+
+  // Try to find complete events and construct valid JSON
+  const events: ParsedEvent[] = [];
+  
+  // Match individual event objects
+  const eventRegex = /\{\s*"eventNumber"\s*:\s*(\d+|null)\s*,\s*"eventName"\s*:\s*"([^"]+)"\s*,\s*"athletes"\s*:\s*\[([^\]]*)\]/g;
+  let match;
+  
+  while ((match = eventRegex.exec(jsonContent)) !== null) {
+    const eventNumber = match[1] === 'null' ? null : parseInt(match[1]);
+    const eventName = match[2];
+    const athletesStr = match[3];
+    
+    // Parse athletes array
+    const athletes: ParsedEvent['athletes'] = [];
+    const athleteRegex = /\{\s*"name"\s*:\s*"([^"]+)"(?:\s*,\s*"team"\s*:\s*"([^"]*)")?(?:\s*,\s*"heat"\s*:\s*(\d+))?(?:\s*,\s*"lane"\s*:\s*(\d+))?(?:\s*,\s*"seedTime"\s*:\s*"([^"]*)")?\s*\}/g;
+    let athleteMatch;
+    
+    while ((athleteMatch = athleteRegex.exec(athletesStr)) !== null) {
+      athletes.push({
+        name: athleteMatch[1],
+        team: athleteMatch[2] || undefined,
+        heat: athleteMatch[3] ? parseInt(athleteMatch[3]) : undefined,
+        lane: athleteMatch[4] ? parseInt(athleteMatch[4]) : undefined,
+        seedTime: athleteMatch[5] || undefined,
+      });
+    }
+    
+    events.push({
+      eventNumber,
+      eventName,
+      athletes,
+      rawText: `Event ${eventNumber || 'N/A'}: ${eventName}`,
+    });
+  }
+
+  if (events.length > 0) {
+    return { events };
+  }
+
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -73,30 +143,29 @@ Deno.serve(async (req) => {
             content: [
               {
                 type: 'text',
-                text: `You are a swim meet PDF parser. Extract all events and athletes from this swim meet heat sheet PDF.
+                text: `Parse this swim meet heat sheet PDF. Extract ONLY structured data, NO raw text.
 
-For each event, extract:
-- Event number (if present)
-- Event name (e.g., "Girls 11-12 50 Yard Freestyle")
-- List of athletes with: name, team/club abbreviation, heat number, lane number, seed time
-
-Return the data as a JSON object with this exact structure:
+Return a JSON object with this EXACT structure:
 {
   "events": [
     {
       "eventNumber": 1,
       "eventName": "Girls 11-12 50 Yard Freestyle",
       "athletes": [
-        {"name": "Jane Smith", "team": "ABCD", "heat": 1, "lane": 4, "seedTime": "32.45"},
-        ...
+        {"name": "Jane Smith", "team": "ABCD", "heat": 1, "lane": 4, "seedTime": "32.45"}
       ]
-    },
-    ...
-  ],
-  "rawText": "The full text content of the PDF for reference"
+    }
+  ]
 }
 
-Be thorough and extract ALL events and athletes. If you can't determine a value, omit that field. Return ONLY valid JSON, no markdown or explanation.`
+Rules:
+- Extract ALL events and ALL athletes
+- eventNumber: integer or null
+- eventName: string (e.g., "Boys 8 & Under 25 Yard Freestyle")
+- athletes: array of {name, team, heat, lane, seedTime}
+- team: club abbreviation (e.g., "CTS-GA", "JEFF-GA")
+- seedTime: string (e.g., "32.45", "NT", "1:02.35 INV")
+- Return ONLY valid JSON, no markdown, no explanation`
               },
               {
                 type: 'image_url',
@@ -107,7 +176,7 @@ Be thorough and extract ALL events and athletes. If you can't determine a value,
             ]
           }
         ],
-        max_tokens: 16000,
+        max_tokens: 64000,
       }),
     });
 
@@ -125,33 +194,21 @@ Be thorough and extract ALL events and athletes. If you can't determine a value,
     
     console.log('AI response received, length:', content.length);
 
-    // Parse the AI response
-    let parsedData: { events: ParsedEvent[]; rawText: string };
-    try {
-      // Remove markdown code blocks if present
-      let jsonContent = content.trim();
-      if (jsonContent.startsWith('```json')) {
-        jsonContent = jsonContent.slice(7);
-      } else if (jsonContent.startsWith('```')) {
-        jsonContent = jsonContent.slice(3);
-      }
-      if (jsonContent.endsWith('```')) {
-        jsonContent = jsonContent.slice(0, -3);
-      }
-      jsonContent = jsonContent.trim();
+    // Parse the AI response with robust extraction
+    let parsedData = extractJsonFromResponse(content);
+    
+    if (!parsedData || !parsedData.events || parsedData.events.length === 0) {
+      console.error('Failed to extract events from AI response');
+      console.log('Response preview:', content.substring(0, 500));
       
-      parsedData = JSON.parse(jsonContent);
-    } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      // If parsing fails, create a fallback structure
+      // Create a fallback with raw content for debugging
       parsedData = {
         events: [{
           eventNumber: null,
-          eventName: 'Meet Content (Manual Review Required)',
+          eventName: 'Parse Error - Manual Review Required',
           athletes: [],
-          rawText: content.substring(0, 5000),
+          rawText: content.substring(0, 2000),
         }],
-        rawText: content,
       };
     }
 
@@ -162,11 +219,14 @@ Be thorough and extract ALL events and athletes. If you can't determine a value,
     }));
 
     console.log('Parsed events count:', events.length);
+    if (events.length > 0) {
+      console.log('Sample event:', JSON.stringify(events[0]).substring(0, 200));
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        rawContent: parsedData.rawText || content,
+        rawContent: `Parsed ${events.length} events`,
         events,
         meetId,
       }),
