@@ -1,8 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const CTA = () => {
+  const { toast } = useToast();
+
+  const handleWatchDemo = () => {
+    toast({
+      title: "Demo Video Coming Soon",
+      description: "We're working on a video walkthrough. Try uploading a meet PDF to see MeetSheet in action!",
+    });
+  };
   return (
     <section className="py-20 px-4 bg-gradient-to-br from-coral/10 via-sand to-ocean/10">
       <div className="max-w-4xl mx-auto text-center">
@@ -29,7 +38,12 @@ const CTA = () => {
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>
-          <Button variant="outline" size="lg" className="px-8 py-6 text-lg rounded-xl border-2 border-ocean/30 hover:bg-ocean/10">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="px-8 py-6 text-lg rounded-xl border-2 border-ocean/30 hover:bg-ocean/10"
+            onClick={handleWatchDemo}
+          >
             Watch Demo
           </Button>
         </div>

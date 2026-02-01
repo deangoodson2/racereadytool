@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const plans = [
   {
@@ -50,6 +51,15 @@ const plans = [
 ];
 
 const Pricing = () => {
+  const { toast } = useToast();
+
+  const handleContactSales = () => {
+    toast({
+      title: "Contact Sales",
+      description: "Email us at sales@meetsheet.com for team pricing inquiries.",
+    });
+  };
+
   return (
     <section id="pricing" className="py-20 px-4 bg-white">
       <div className="max-w-6xl mx-auto">
@@ -103,17 +113,26 @@ const Pricing = () => {
               </CardContent>
               
               <CardFooter>
-                <Link to="/upload" className="w-full">
+                {plan.cta === "Contact Sales" ? (
                   <Button 
-                    className={`w-full rounded-xl py-6 ${
-                      plan.popular 
-                        ? 'bg-coral hover:bg-coral-dark text-white' 
-                        : 'bg-secondary hover:bg-secondary/80'
-                    }`}
+                    className="w-full rounded-xl py-6 bg-secondary hover:bg-secondary/80"
+                    onClick={handleContactSales}
                   >
                     {plan.cta}
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/upload" className="w-full">
+                    <Button 
+                      className={`w-full rounded-xl py-6 ${
+                        plan.popular 
+                          ? 'bg-coral hover:bg-coral-dark text-white' 
+                          : 'bg-secondary hover:bg-secondary/80'
+                      }`}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
+                )}
               </CardFooter>
             </Card>
           ))}
