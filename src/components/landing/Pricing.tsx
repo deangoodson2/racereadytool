@@ -8,7 +8,7 @@ const plans = [
   {
     name: "Free",
     price: "$0",
-    description: "Perfect for trying MeetSheet",
+    description: "Perfect for trying RaceReady",
     features: [
       "3 meet uploads per month",
       "Basic athlete filtering",
@@ -56,7 +56,7 @@ const Pricing = () => {
   const handleContactSales = () => {
     toast({
       title: "Contact Sales",
-      description: "Email us at sales@meetsheet.com for team pricing inquiries.",
+      description: "Email us at sales@raceready.com for team pricing inquiries.",
     });
   };
 

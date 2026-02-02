@@ -9,7 +9,7 @@ const CTA = () => {
   const handleWatchDemo = () => {
     toast({
       title: "Demo Video Coming Soon",
-      description: "We're working on a video walkthrough. Try uploading a meet PDF to see MeetSheet in action!",
+      description: "We're working on a video walkthrough. Try uploading a meet PDF to see RaceReady in action!",
     });
   };
   return (
@@ -33,8 +33,8 @@ const CTA = () => {
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/upload">
-            <Button size="lg" className="bg-coral hover:bg-coral-dark text-white px-8 py-6 text-lg rounded-xl shadow-warm hover:shadow-lg transition-all duration-300">
-              Try MeetSheet Free
+            <Button size="lg" className="bg-coral hover:bg-coral-dark text-white px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-warm transition-all duration-300">
+              Try RaceReady Free
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </Link>
