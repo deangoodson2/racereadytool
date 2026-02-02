@@ -16,74 +16,120 @@ interface ParsedEvent {
   rawText: string;
 }
 
-function extractJsonFromResponse(content: string): { events: ParsedEvent[] } | null {
-  // Try to extract JSON from response, handling truncation
-  let jsonContent = content.trim();
-  
-  // Remove markdown code blocks if present
-  if (jsonContent.startsWith('```json')) {
-    jsonContent = jsonContent.slice(7);
-  } else if (jsonContent.startsWith('```')) {
-    jsonContent = jsonContent.slice(3);
-  }
-  if (jsonContent.endsWith('```')) {
-    jsonContent = jsonContent.slice(0, -3);
-  }
-  jsonContent = jsonContent.trim();
+function stripCodeFences(input: string): string {
+  let out = input.trim();
+  if (out.startsWith("```json")) out = out.slice(7);
+  else if (out.startsWith("```")) out = out.slice(3);
+  if (out.endsWith("```")) out = out.slice(0, -3);
+  return out.trim();
+}
 
-  // Try direct parse first
+function tryParseJson<T>(raw: string): T | null {
   try {
-    return JSON.parse(jsonContent);
+    return JSON.parse(raw) as T;
   } catch {
-    // Response may be truncated, try to fix it
-  }
-
-  // Find where events array might have been truncated and try to close it
-  const eventsMatch = jsonContent.match(/"events"\s*:\s*\[/);
-  if (!eventsMatch) {
     return null;
   }
+}
 
-  // Try to find complete events and construct valid JSON
+// Removes common invalid trailing commas (e.g. {"a":1,} or [1,2,])
+function removeTrailingCommas(raw: string): string {
+  return raw.replace(/,\s*([}\]])/g, "$1");
+}
+
+function normalizeEventShape(maybeEvent: any): ParsedEvent | null {
+  if (!maybeEvent || typeof maybeEvent !== "object") return null;
+  const eventNumber =
+    typeof maybeEvent.eventNumber === "number"
+      ? maybeEvent.eventNumber
+      : maybeEvent.eventNumber === null
+        ? null
+        : null;
+  const eventName = typeof maybeEvent.eventName === "string" ? maybeEvent.eventName : "";
+  const athletes = Array.isArray(maybeEvent.athletes) ? maybeEvent.athletes : [];
+  if (!eventName) return null;
+
+  return {
+    eventNumber,
+    eventName,
+    athletes: athletes
+      .map((a: any) => {
+        if (!a || typeof a !== "object") return null;
+        if (typeof a.name !== "string" || !a.name) return null;
+        return {
+          name: a.name,
+          team: typeof a.team === "string" && a.team ? a.team : undefined,
+          heat: typeof a.heat === "number" ? a.heat : undefined,
+          lane: typeof a.lane === "number" ? a.lane : undefined,
+          seedTime: typeof a.seedTime === "string" && a.seedTime ? a.seedTime : undefined,
+        };
+      })
+      .filter(Boolean),
+    rawText: typeof maybeEvent.rawText === "string" && maybeEvent.rawText ? maybeEvent.rawText : "",
+  };
+}
+
+function extractEventsFromPossiblyTruncatedResponse(rawContent: string): ParsedEvent[] {
+  const content = stripCodeFences(rawContent);
+
+  // Best case: valid JSON already.
+  const direct = tryParseJson<{ events?: any[] }>(removeTrailingCommas(content));
+  if (direct?.events && Array.isArray(direct.events)) {
+    return direct.events.map(normalizeEventShape).filter(Boolean) as ParsedEvent[];
+  }
+
+  // Fallback: scan out *complete* event objects within the "events" array.
+  const keyIdx = content.indexOf('"events"');
+  if (keyIdx === -1) return [];
+
+  const arrStart = content.indexOf("[", keyIdx);
+  if (arrStart === -1) return [];
+
   const events: ParsedEvent[] = [];
-  
-  // Match individual event objects
-  const eventRegex = /\{\s*"eventNumber"\s*:\s*(\d+|null)\s*,\s*"eventName"\s*:\s*"([^"]+)"\s*,\s*"athletes"\s*:\s*\[([^\]]*)\]/g;
-  let match;
-  
-  while ((match = eventRegex.exec(jsonContent)) !== null) {
-    const eventNumber = match[1] === 'null' ? null : parseInt(match[1]);
-    const eventName = match[2];
-    const athletesStr = match[3];
-    
-    // Parse athletes array
-    const athletes: ParsedEvent['athletes'] = [];
-    const athleteRegex = /\{\s*"name"\s*:\s*"([^"]+)"(?:\s*,\s*"team"\s*:\s*"([^"]*)")?(?:\s*,\s*"heat"\s*:\s*(\d+))?(?:\s*,\s*"lane"\s*:\s*(\d+))?(?:\s*,\s*"seedTime"\s*:\s*"([^"]*)")?\s*\}/g;
-    let athleteMatch;
-    
-    while ((athleteMatch = athleteRegex.exec(athletesStr)) !== null) {
-      athletes.push({
-        name: athleteMatch[1],
-        team: athleteMatch[2] || undefined,
-        heat: athleteMatch[3] ? parseInt(athleteMatch[3]) : undefined,
-        lane: athleteMatch[4] ? parseInt(athleteMatch[4]) : undefined,
-        seedTime: athleteMatch[5] || undefined,
-      });
+  let inString = false;
+  let escaped = false;
+  let depth = 0;
+  let objStart = -1;
+
+  for (let i = arrStart + 1; i < content.length; i++) {
+    const ch = content[i];
+
+    if (escaped) {
+      escaped = false;
+      continue;
     }
-    
-    events.push({
-      eventNumber,
-      eventName,
-      athletes,
-      rawText: `Event ${eventNumber || 'N/A'}: ${eventName}`,
-    });
+    if (ch === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+
+    if (ch === "{") {
+      if (depth === 0) objStart = i;
+      depth++;
+      continue;
+    }
+    if (ch === "}") {
+      depth = Math.max(0, depth - 1);
+      if (depth === 0 && objStart !== -1) {
+        const objRaw = content.slice(objStart, i + 1);
+        const parsed = tryParseJson<any>(removeTrailingCommas(objRaw));
+        const normalized = normalizeEventShape(parsed);
+        if (normalized) events.push(normalized);
+        objStart = -1;
+      }
+      continue;
+    }
+
+    // End of array: we're done.
+    if (ch === "]" && depth === 0) break;
   }
 
-  if (events.length > 0) {
-    return { events };
-  }
-
-  return null;
+  return events;
 }
 
 Deno.serve(async (req) => {
@@ -124,7 +170,14 @@ Deno.serve(async (req) => {
 
     // Convert PDF to base64
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+    // Avoid stack overflows for larger PDFs by chunking.
+    const bytes = new Uint8Array(pdfBuffer);
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+    }
+    const pdfBase64 = btoa(binary);
     
     console.log('PDF fetched, size:', pdfBuffer.byteLength, 'bytes');
 
@@ -176,6 +229,7 @@ Rules:
             ]
           }
         ],
+        temperature: 0,
         max_tokens: 64000,
       }),
     });
@@ -195,25 +249,33 @@ Rules:
     console.log('AI response received, length:', content.length);
 
     // Parse the AI response with robust extraction
-    let parsedData = extractJsonFromResponse(content);
-    
-    if (!parsedData || !parsedData.events || parsedData.events.length === 0) {
+    const extractedEvents = extractEventsFromPossiblyTruncatedResponse(content);
+
+    if (!extractedEvents || extractedEvents.length === 0) {
       console.error('Failed to extract events from AI response');
       console.log('Response preview:', content.substring(0, 500));
       
       // Create a fallback with raw content for debugging
-      parsedData = {
-        events: [{
+      const fallbackEvents: ParsedEvent[] = [{
           eventNumber: null,
           eventName: 'Parse Error - Manual Review Required',
           athletes: [],
           rawText: content.substring(0, 2000),
-        }],
-      };
+        }];
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          rawContent: `Parsed 0 events (fallback)` ,
+          events: fallbackEvents,
+          meetId,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Ensure events have rawText
-    const events = (parsedData.events || []).map((event, index) => ({
+    const events = (extractedEvents || []).map((event, index) => ({
       ...event,
       rawText: event.rawText || `Event ${event.eventNumber || index + 1}: ${event.eventName}`,
     }));
