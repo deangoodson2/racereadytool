@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import Header from "@/components/landing/Header";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
@@ -38,6 +44,7 @@ const SchedulePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAthletes, setSelectedAthletes] = useState<string[]>(["All Athletes"]);
   const [selectedTeams, setSelectedTeams] = useState<string[]>(["All Teams"]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadMeet() {
@@ -79,6 +86,7 @@ const SchedulePage = () => {
     const teamSet = new Set<string>();
     const events: Array<{
       id: string;
+      sourceEventId: string;
       eventNumber: number | null;
       eventName: string;
       athlete: string;
@@ -97,6 +105,7 @@ const SchedulePage = () => {
             
             events.push({
               id: `${event.id}-${idx}`,
+              sourceEventId: event.id,
               eventNumber: event.eventNumber,
               eventName: event.eventName,
               athlete: athlete.name,
@@ -111,6 +120,7 @@ const SchedulePage = () => {
         // Event with no parsed athletes - show the event itself
         events.push({
           id: event.id,
+          sourceEventId: event.id,
           eventNumber: event.eventNumber,
           eventName: event.eventName,
           athlete: "See full event",
@@ -141,6 +151,11 @@ const SchedulePage = () => {
     
     return matchesSearch && matchesAthlete && matchesTeam;
   });
+
+  const selectedEvent: MeetEvent | null = useMemo(() => {
+    if (!meet || !selectedEventId) return null;
+    return meet.events.find((e) => e.id === selectedEventId) || null;
+  }, [meet, selectedEventId]);
 
   const toggleAthlete = (athlete: string) => {
     if (athlete === "All Athletes") {
@@ -350,6 +365,15 @@ const SchedulePage = () => {
               className={`rounded-xl border-0 shadow-warm hover:shadow-lg transition-all duration-300 ${
                 index === 0 ? 'border-l-4 border-l-coral bg-coral/5' : 'bg-white'
               }`}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedEventId(event.sourceEventId)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setSelectedEventId(event.sourceEventId);
+                }
+              }}
             >
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -393,6 +417,53 @@ const SchedulePage = () => {
             </Card>
           ))}
         </div>
+
+        <Dialog open={!!selectedEvent} onOpenChange={(open) => (!open ? setSelectedEventId(null) : undefined)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedEvent?.eventNumber ? `Event #${selectedEvent.eventNumber}: ` : "Event: "}
+                {selectedEvent?.eventName}
+              </DialogTitle>
+            </DialogHeader>
+
+            {selectedEvent?.athletes?.length ? (
+              <div className="space-y-3">
+                <div className="text-sm text-muted-foreground">
+                  {selectedEvent.athletes.length} athletes
+                </div>
+                <div className="max-h-[60vh] overflow-auto rounded-lg border border-border/50">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="text-left">
+                        <th className="p-3 font-medium">Athlete</th>
+                        <th className="p-3 font-medium">Team</th>
+                        <th className="p-3 font-medium">Heat</th>
+                        <th className="p-3 font-medium">Lane</th>
+                        <th className="p-3 font-medium">Seed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedEvent.athletes.map((a, idx) => (
+                        <tr key={`${a.name}-${idx}`} className="border-t border-border/50">
+                          <td className="p-3 font-medium text-foreground">{a.name}</td>
+                          <td className="p-3 text-muted-foreground">{a.team || "—"}</td>
+                          <td className="p-3 text-muted-foreground">{a.heat ?? "—"}</td>
+                          <td className="p-3 text-muted-foreground">{a.lane ?? "—"}</td>
+                          <td className="p-3 text-muted-foreground">{a.seedTime || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No athletes were parsed for this event yet.
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {filteredEvents.length === 0 && (
           <Card className="rounded-2xl border-0 shadow-warm">
