@@ -100,7 +100,7 @@ const UploadPage = () => {
             Upload Your Meet Sheet
           </h1>
           <p className="text-muted-foreground">
-            Drag and drop your meet PDF or click to browse
+            Get your personalized race schedule in seconds
           </p>
         </div>
 

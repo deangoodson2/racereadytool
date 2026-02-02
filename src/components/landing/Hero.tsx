@@ -43,7 +43,7 @@ const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Link to="/upload">
-                <Button size="lg" className="bg-coral hover:bg-coral-dark text-white px-8 py-6 text-lg rounded-xl shadow-warm hover:shadow-lg transition-all duration-300">
+                <Button size="lg" className="bg-coral hover:bg-coral-dark text-white px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-warm transition-all duration-300">
                   Upload Meet PDF
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -51,7 +51,7 @@ const Hero = () => {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="px-8 py-6 text-lg rounded-xl border-2 border-ocean/30 hover:bg-ocean/10"
+                className="px-8 py-6 text-lg rounded-xl border-2 border-ocean/40 hover:bg-ocean-light/50 hover:border-ocean"
                 onClick={() => scrollToSection("how-it-works")}
               >
                 See How It Works

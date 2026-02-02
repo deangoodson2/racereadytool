@@ -27,7 +27,7 @@ const Footer = () => {
               <div className="w-10 h-10 bg-coral rounded-xl flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">MeetSheet</span>
+              <span className="text-xl font-bold">RaceReady</span>
             </Link>
             <p className="text-white/70 text-sm leading-relaxed">
               Transforming meet schedules for coaches and parents. Built by coaches, for coaches.
@@ -48,7 +48,7 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Support</h4>
             <ul className="space-y-2 text-white/70">
               <li><a href="#" onClick={(e) => handleComingSoon(e, "Help Center")} className="hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="mailto:support@meetsheet.com" className="hover:text-white transition-colors">Contact Us</a></li>
+              <li><a href="mailto:support@raceready.com" className="hover:text-white transition-colors">Contact Us</a></li>
               <li><a href="#" onClick={(e) => handleComingSoon(e, "Status")} className="hover:text-white transition-colors">Status</a></li>
               <li><a href="#" onClick={(e) => handleComingSoon(e, "API Docs")} className="hover:text-white transition-colors">API Docs</a></li>
             </ul>
@@ -67,11 +67,11 @@ const Footer = () => {
         
         <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/50 text-sm">
-            © {new Date().getFullYear()} MeetSheet. All rights reserved.
+            © {new Date().getFullYear()} RaceReady. All rights reserved.
           </p>
           
           <div className="flex items-center gap-4">
-            <a href="mailto:hello@meetsheet.com" className="text-white/50 hover:text-white transition-colors" aria-label="Email">
+            <a href="mailto:hello@raceready.com" className="text-white/50 hover:text-white transition-colors" aria-label="Email">
               <Mail className="w-5 h-5" />
             </a>
             <a 
