@@ -125,7 +125,8 @@ Rules:
 - athletes: array of {name, team, heat, lane, seedTime}
 - team: club abbreviation (e.g., "CTS-GA", "JEFF-GA")
 - seedTime: string (e.g., "32.45", "NT", "1:02.35 INV")
-- Return ONLY valid JSON, no markdown, no explanation`;
+- Return ONLY valid JSON, no markdown, no explanation
+- IMPORTANT: You MUST extract EVERY SINGLE event in the document. Do not stop early.`;
 
 async function callAI(apiKey: string, pdfBase64: string, pageHint?: string): Promise<ParsedEvent[]> {
   const promptText = pageHint ? `${AI_PROMPT}\n\nNote: This is ${pageHint} of the document.` : AI_PROMPT;
@@ -146,7 +147,7 @@ async function callAI(apiKey: string, pdfBase64: string, pageHint?: string): Pro
         ],
       }],
       temperature: 0,
-      max_tokens: 32000,
+      max_tokens: 100000,
     }),
   });
 
@@ -158,7 +159,8 @@ async function callAI(apiKey: string, pdfBase64: string, pageHint?: string): Pro
 
   const aiData = await response.json();
   const content = aiData.choices?.[0]?.message?.content || '';
-  console.log('AI chunk response length:', content.length);
+  const finishReason = aiData.choices?.[0]?.finish_reason || 'unknown';
+  console.log('AI chunk response length:', content.length, 'finish_reason:', finishReason);
   return extractEventsFromResponse(content);
 }
 
@@ -166,7 +168,7 @@ async function callAI(apiKey: string, pdfBase64: string, pageHint?: string): Pro
 // Since we can't split pages without a full PDF library, we send the full PDF but ask
 // the AI to focus on different page ranges. For very large PDFs (>2MB) we split into
 // parallel requests on the same base64 but with different page-range hints.
-const CHUNK_THRESHOLD = 2 * 1024 * 1024; // 2MB
+const CHUNK_THRESHOLD = 50 * 1024; // 50KB - chunk aggressively to avoid truncation
 const MAX_CHUNKS = 3;
 
 function estimatePageCount(sizeBytes: number): number {
