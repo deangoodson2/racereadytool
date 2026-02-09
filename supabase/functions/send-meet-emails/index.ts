@@ -8,6 +8,31 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Normalize "Last, First" or "First Last" into sorted lowercase parts for comparison
+function normalizeName(name: string): string[] {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z\s]/g, "") // remove commas, parens, etc.
+    .split(/\s+/)
+    .filter(Boolean)
+    .sort();
+}
+
+function namesMatch(inputName: string, sheetName: string): boolean {
+  const inputParts = normalizeName(inputName);
+  const sheetParts = normalizeName(sheetName);
+
+  if (inputParts.length === 0 || sheetParts.length === 0) return false;
+
+  // Check if all parts from the shorter name exist in the longer name
+  const shorter = inputParts.length <= sheetParts.length ? inputParts : sheetParts;
+  const longer = inputParts.length <= sheetParts.length ? sheetParts : inputParts;
+
+  return shorter.every((part) =>
+    longer.some((lp) => lp.startsWith(part) || part.startsWith(lp))
+  );
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +55,6 @@ serve(async (req: Request) => {
     const { meetId } = await req.json();
     if (!meetId) throw new Error("meetId is required");
 
-    // Get meet info
     const { data: meet, error: meetErr } = await supabase
       .from("meets")
       .select("*")
@@ -38,7 +62,6 @@ serve(async (req: Request) => {
       .single();
     if (meetErr || !meet) throw new Error("Meet not found");
 
-    // Get events for this meet
     const { data: events, error: eventsErr } = await supabase
       .from("events")
       .select("*")
@@ -46,7 +69,6 @@ serve(async (req: Request) => {
       .order("event_number", { ascending: true });
     if (eventsErr) throw new Error("Failed to load events");
 
-    // Get subscribers for this meet
     const { data: subscribers, error: subErr } = await supabase
       .from("meet_subscribers")
       .select("*")
@@ -59,7 +81,7 @@ serve(async (req: Request) => {
       });
     }
 
-    // Group subscribers by email (one parent may have multiple swimmers)
+    // Group subscribers by email
     const byEmail = new Map<string, string[]>();
     for (const sub of subscribers) {
       const names = byEmail.get(sub.email) || [];
@@ -72,17 +94,12 @@ serve(async (req: Request) => {
     const meetName = meet.file_name?.replace(".pdf", "") || "Swim Meet";
 
     for (const [email, swimmerNames] of byEmail) {
-      // Find matching events for each swimmer
       const swimmerSections: string[] = [];
 
       for (const swimmerName of swimmerNames) {
-        const nameLower = swimmerName.toLowerCase();
         const matchingEvents = (events || []).filter((event: any) => {
           const athletes = event.athletes || [];
-          return athletes.some((a: any) =>
-            a.name?.toLowerCase().includes(nameLower) ||
-            nameLower.includes(a.name?.toLowerCase() || "")
-          );
+          return athletes.some((a: any) => namesMatch(swimmerName, a.name || ""));
         });
 
         if (matchingEvents.length > 0) {
@@ -92,10 +109,7 @@ serve(async (req: Request) => {
 
           for (const event of matchingEvents) {
             const athletes = event.athletes || [];
-            const athlete = athletes.find((a: any) =>
-              a.name?.toLowerCase().includes(nameLower) ||
-              nameLower.includes(a.name?.toLowerCase() || "")
-            );
+            const athlete = athletes.find((a: any) => namesMatch(swimmerName, a.name || ""));
             const eventLabel = event.event_number ? `#${event.event_number} ${event.event_name}` : event.event_name;
             html += `<tr style="border-bottom:1px solid #e5e7eb;">`;
             html += `<td style="padding:8px;">${eventLabel}</td>`;
