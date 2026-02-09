@@ -18,6 +18,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import Header from "@/components/landing/Header";
+import SubscriberForm from "@/components/schedule/SubscriberForm";
+import SendEmailsButton from "@/components/schedule/SendEmailsButton";
 import {
   Dialog,
   DialogContent,
@@ -252,6 +254,7 @@ const SchedulePage = () => {
           </div>
           
           <div className="flex gap-2">
+            <SendEmailsButton meetId={meet.id} meetName={meet.fileName.replace('.pdf', '')} />
             <Button variant="outline" className="rounded-xl border-ocean/30">
               <Share2 className="w-4 h-4 mr-2" />
               Share
@@ -261,6 +264,11 @@ const SchedulePage = () => {
               Download PDF
             </Button>
           </div>
+        </div>
+
+        {/* Subscriber Form */}
+        <div className="mb-6">
+          <SubscriberForm meetId={meet.id} />
         </div>
 
         {/* Filters */}

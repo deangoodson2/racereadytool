@@ -1,1 +1,4 @@
 project_id = "surkutrjonzussswjnop"
+
+[functions.send-meet-emails]
+verify_jwt = false
