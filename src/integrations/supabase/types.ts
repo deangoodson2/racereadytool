@@ -52,6 +52,38 @@ export type Database = {
           },
         ]
       }
+      meet_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          meet_id: string
+          swimmer_name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          meet_id: string
+          swimmer_name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          meet_id?: string
+          swimmer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meet_subscribers_meet_id_fkey"
+            columns: ["meet_id"]
+            isOneToOne: false
+            referencedRelation: "meets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meets: {
         Row: {
           created_at: string
