@@ -20,6 +20,7 @@ import {
 import Header from "@/components/landing/Header";
 import SubscriberForm from "@/components/schedule/SubscriberForm";
 import SendEmailsButton from "@/components/schedule/SendEmailsButton";
+import CoachTools from "@/components/schedule/CoachTools";
 import {
   Dialog,
   DialogContent,
@@ -264,6 +265,16 @@ const SchedulePage = () => {
               Download PDF
             </Button>
           </div>
+        </div>
+
+        {/* Coach Tools */}
+        <div className="mb-6">
+          <CoachTools
+            meetId={meet.id}
+            fileUrl={meet.fileUrl}
+            events={meet.events}
+            teams={teams.filter(t => t !== "All Teams")}
+          />
         </div>
 
         {/* Subscriber Form */}
