@@ -2,3 +2,9 @@ project_id = "surkutrjonzussswjnop"
 
 [functions.send-meet-emails]
 verify_jwt = false
+
+[functions.highlight-meet-pdf]
+verify_jwt = false
+
+[functions.generate-summary-pdf]
+verify_jwt = false
