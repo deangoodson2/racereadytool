@@ -75,8 +75,21 @@ Deno.serve(async (req) => {
     console.log(`Found ${uniqueNames.length} athletes matching team=${team}, lanes=${lanes}`);
 
     if (uniqueNames.length === 0) {
+      // Find which lanes this team actually has athletes in
+      const teamLanes = new Set<number>();
+      for (const event of events || []) {
+        for (const a of (event.athletes as any[]) || []) {
+          if (a.team && a.team.toLowerCase() === team.toLowerCase() && a.lane) {
+            teamLanes.add(a.lane);
+          }
+        }
+      }
+      const availableLanes = [...teamLanes].sort((a, b) => a - b);
+      const msg = availableLanes.length > 0
+        ? `No ${team} athletes found in lane(s) ${lanes.join(", ")}. ${team} athletes are in lane(s): ${availableLanes.join(", ")}`
+        : `No athletes found for team "${team}" in this meet.`;
       return new Response(
-        JSON.stringify({ success: false, error: "No athletes found matching team and lane criteria" }),
+        JSON.stringify({ success: false, error: msg }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
