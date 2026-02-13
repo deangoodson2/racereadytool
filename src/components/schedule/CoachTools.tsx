@@ -51,16 +51,24 @@ const CoachTools = ({ meetId, fileUrl, events, teams }: CoachToolsProps) => {
   const [loadingHighlight, setLoadingHighlight] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
 
-  // Determine available lanes from the events data
+  // Determine available lanes filtered by selected team
   const availableLanes = useMemo(() => {
     const laneSet = new Set<number>();
     events.forEach((event) => {
       event.athletes?.forEach((a) => {
-        if (a.lane && a.lane > 0) laneSet.add(a.lane);
+        if (a.lane && a.lane > 0 && (!selectedTeam || (a.team && a.team.toLowerCase() === selectedTeam.toLowerCase()))) {
+          laneSet.add(a.lane);
+        }
       });
     });
     return Array.from(laneSet).sort((a, b) => a - b);
-  }, [events]);
+  }, [events, selectedTeam]);
+
+  // Clear selected lanes when team changes and they're no longer valid
+  const handleTeamChange = (team: string) => {
+    setSelectedTeam(team);
+    setSelectedLanes([]);
+  };
 
   const toggleLane = (lane: number) => {
     setSelectedLanes((prev) =>
@@ -159,7 +167,7 @@ const CoachTools = ({ meetId, fileUrl, events, teams }: CoachToolsProps) => {
           {/* Team Selector */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Team</Label>
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+            <Select value={selectedTeam} onValueChange={handleTeamChange}>
               <SelectTrigger className="rounded-xl">
                 <SelectValue placeholder="Select your team" />
               </SelectTrigger>
