@@ -48,15 +48,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get events for this meet filtered by team + lanes
+    // Get events for this meet
     const { data: events } = await supabase
       .from("events")
       .select("event_name, event_number, athletes")
       .eq("meet_id", meetId)
       .order("event_number", { ascending: true });
 
-    // Build search terms: athlete names from matching team+lanes
-    const searchNames: string[] = [];
+    // Build detailed search entries with event/heat/lane context
+    const searchEntries: Array<{ name: string; team: string; lane: number; heat: number; event: string }> = [];
     for (const event of events || []) {
       const athletes = (event.athletes as any[]) || [];
       for (const a of athletes) {
@@ -66,16 +66,14 @@ Deno.serve(async (req) => {
           a.lane &&
           lanes.includes(a.lane)
         ) {
-          if (a.name) searchNames.push(a.name);
+          if (a.name) searchEntries.push({ name: a.name, team: a.team, lane: a.lane, heat: a.heat || 0, event: event.event_name });
         }
       }
     }
 
-    const uniqueNames = [...new Set(searchNames)];
-    console.log(`Found ${uniqueNames.length} athletes matching team=${team}, lanes=${lanes}`);
+    console.log(`Found ${searchEntries.length} athlete entries matching team=${team}, lanes=${lanes}`);
 
-    if (uniqueNames.length === 0) {
-      // Find which lanes this team actually has athletes in
+    if (searchEntries.length === 0) {
       const teamLanes = new Set<number>();
       for (const event of events || []) {
         for (const a of (event.athletes as any[]) || []) {
@@ -100,7 +98,6 @@ Deno.serve(async (req) => {
     if (!pdfResponse.ok) throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
     const pdfBytes = new Uint8Array(await pdfResponse.arrayBuffer());
 
-    // Use AI to find text positions for the athlete names
     // Convert PDF to base64 for AI
     let binary = "";
     const chunkSize = 0x8000;
@@ -109,22 +106,34 @@ Deno.serve(async (req) => {
     }
     const pdfBase64 = btoa(binary);
 
-    const aiPrompt = `Analyze this swim meet heat sheet PDF. I need to find the EXACT positions of specific athlete entries so I can highlight them.
+    // Build detailed list for AI with context to avoid misses
+    const entryList = searchEntries.map(e =>
+      `"${e.name}" (${e.team}, Heat ${e.heat}, Lane ${e.lane}) in ${e.event}`
+    ).join("\n");
 
-Athletes to find: ${uniqueNames.join(", ")}
+    const aiPrompt = `You are analyzing a swim meet heat sheet PDF. I need the EXACT positions of specific athlete rows so I can draw highlights on them.
 
-For EACH athlete found, return the page number (1-indexed) and the approximate vertical position as a percentage from the TOP of the page (0% = top, 100% = bottom).
+Here are ALL the entries to find — do NOT miss any:
+${entryList}
 
-Return ONLY a JSON object like this:
+For EACH entry above, find the row in the PDF where that athlete appears and return:
+- page: 1-indexed page number
+- yPercent: vertical position as percentage from TOP of page (0=top, 100=bottom). Must be precise to the CENTER of the text row.
+- xStartPercent: horizontal start of the athlete's row content as percentage from LEFT (typically where the lane number starts)
+- xEndPercent: horizontal end of the athlete's row content as percentage from LEFT (typically where the seed time ends)
+
+IMPORTANT:
+- Each entry listed above MUST appear in your response. There are ${searchEntries.length} entries total.
+- Heat sheets list athletes in rows like: "Lane Name Team SeedTime"
+- The same athlete may appear in multiple events on different pages — include EACH occurrence.
+- Be very precise with yPercent — it should land exactly on the text row.
+
+Return ONLY valid JSON, no markdown:
 {
   "highlights": [
-    {"name": "Athlete Name", "page": 1, "yPercent": 45.5, "found": true},
-    {"name": "Other Athlete", "page": 2, "yPercent": 30.0, "found": true}
+    {"name": "Athlete Name", "event": "Event Name", "page": 1, "yPercent": 45.5, "xStartPercent": 5, "xEndPercent": 95, "found": true}
   ]
-}
-
-If an athlete appears in MULTIPLE events, include a separate entry for each occurrence.
-Return ONLY valid JSON. No markdown, no explanation.`;
+}`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -133,7 +142,7 @@ Return ONLY valid JSON. No markdown, no explanation.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-2.5-pro",
         messages: [{
           role: "user",
           content: [
@@ -154,23 +163,22 @@ Return ONLY valid JSON. No markdown, no explanation.`;
 
     const aiData = await aiResponse.json();
     let content = aiData.choices?.[0]?.message?.content || "";
-    // Strip code fences
     content = content.trim();
     if (content.startsWith("```json")) content = content.slice(7);
     else if (content.startsWith("```")) content = content.slice(3);
     if (content.endsWith("```")) content = content.slice(0, -3);
     content = content.trim();
 
-    let highlights: Array<{ name: string; page: number; yPercent: number; found: boolean }> = [];
+    let highlights: Array<{ name: string; page: number; yPercent: number; xStartPercent?: number; xEndPercent?: number; found: boolean }> = [];
     try {
       const parsed = JSON.parse(content);
       highlights = parsed.highlights || [];
     } catch (e) {
       console.error("Failed to parse AI highlight positions:", e, content.substring(0, 500));
-      // Fallback: no highlights, but still return the PDF
     }
 
-    console.log(`AI identified ${highlights.filter(h => h.found).length} highlight positions`);
+    const foundCount = highlights.filter(h => h.found).length;
+    console.log(`AI identified ${foundCount}/${searchEntries.length} highlight positions`);
 
     // Load PDF with pdf-lib and draw highlights
     const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -183,35 +191,37 @@ Return ONLY valid JSON. No markdown, no explanation.`;
       const { width, height } = page.getSize();
 
       const yFromTop = (h.yPercent / 100) * height;
-      // PDF coordinates are from bottom-left
       const yPos = height - yFromTop;
-      const rowHeight = 14;
+      const rowHeight = 12;
+
+      // Use AI-provided x bounds, with sensible defaults
+      const xStart = ((h.xStartPercent || 3) / 100) * width;
+      const xEnd = ((h.xEndPercent || 97) / 100) * width;
+      const highlightWidth = xEnd - xStart;
 
       if (style === "row") {
         page.drawRectangle({
-          x: 10,
+          x: xStart,
           y: yPos - rowHeight / 2,
-          width: width - 20,
+          width: highlightWidth,
+          height: rowHeight,
+          color: rgb(r, g, blue),
+          opacity: 0.3,
+        });
+      } else if (style === "name") {
+        page.drawRectangle({
+          x: xStart,
+          y: yPos - rowHeight / 2,
+          width: Math.min(highlightWidth, 200),
           height: rowHeight,
           color: rgb(r, g, blue),
           opacity: 0.35,
         });
-      } else if (style === "name") {
-        // Highlight a smaller region around where the name would be
-        page.drawRectangle({
-          x: 30,
-          y: yPos - rowHeight / 2,
-          width: 180,
-          height: rowHeight,
-          color: rgb(r, g, blue),
-          opacity: 0.4,
-        });
       } else if (style === "margin") {
-        // Draw a colored dot/circle in the margin
         page.drawCircle({
-          x: 12,
+          x: 8,
           y: yPos,
-          size: 5,
+          size: 4,
           color: rgb(r, g, blue),
           opacity: 0.9,
         });
@@ -220,7 +230,6 @@ Return ONLY valid JSON. No markdown, no explanation.`;
 
     const modifiedPdfBytes = await pdfDoc.save();
 
-    // Convert to base64 for response
     let resultBinary = "";
     for (let i = 0; i < modifiedPdfBytes.length; i += chunkSize) {
       resultBinary += String.fromCharCode(...modifiedPdfBytes.subarray(i, i + chunkSize));
@@ -231,8 +240,8 @@ Return ONLY valid JSON. No markdown, no explanation.`;
       JSON.stringify({
         success: true,
         pdfBase64: resultBase64,
-        highlightsFound: highlights.filter((h) => h.found).length,
-        athletesSearched: uniqueNames.length,
+        highlightsFound: foundCount,
+        athletesSearched: searchEntries.length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
