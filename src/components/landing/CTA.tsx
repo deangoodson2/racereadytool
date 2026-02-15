@@ -15,7 +15,7 @@ const CTA = () => {
   return (
     <section className="py-20 px-4 bg-gradient-to-br from-coral/10 via-sand to-ocean/10">
       <div className="max-w-4xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-coral mb-6 shadow-warm">
+        <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-coral mb-6 shadow-warm">
           <Sparkles className="w-4 h-4" />
           Ready to save time at your next meet?
         </div>
@@ -33,7 +33,7 @@ const CTA = () => {
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link to="/upload">
-            <Button size="lg" className="bg-coral hover:bg-coral-dark text-white px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-warm transition-all duration-300">
+            <Button size="lg" className="bg-coral hover:bg-coral-dark text-primary-foreground px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-warm transition-all duration-300">
               Try RaceReady Free
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>

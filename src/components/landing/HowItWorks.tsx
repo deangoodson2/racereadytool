@@ -53,7 +53,7 @@ const HowItWorks = () => {
                   <step.icon className="w-10 h-10" />
                 </div>
                 
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-foreground text-white text-sm font-bold mb-3">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-foreground text-background text-sm font-bold mb-3">
                   {index + 1}
                 </span>
                 

@@ -190,7 +190,7 @@ const SchedulePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
+      <div className="min-h-screen bg-gradient-to-br from-sand via-background to-ocean/10">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-center py-20">
@@ -204,7 +204,7 @@ const SchedulePage = () => {
 
   if (error || !meet) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
+      <div className="min-h-screen bg-gradient-to-br from-sand via-background to-ocean/10">
         <Header />
         <main className="max-w-4xl mx-auto px-4 py-8">
           <Card className="rounded-2xl border-0 shadow-warm">
@@ -218,7 +218,7 @@ const SchedulePage = () => {
               </p>
               <Button 
                 onClick={() => navigate("/upload")}
-                className="bg-coral hover:bg-coral-dark text-white rounded-xl"
+                className="bg-coral hover:bg-coral-dark text-primary-foreground rounded-xl"
               >
                 Upload Meet Sheet
               </Button>
@@ -230,7 +230,7 @@ const SchedulePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
+    <div className="min-h-screen bg-gradient-to-br from-sand via-background to-ocean/10">
       <Header />
       
       <main className="max-w-4xl mx-auto px-4 py-8">
@@ -260,7 +260,7 @@ const SchedulePage = () => {
               <Share2 className="w-4 h-4 mr-2" />
               Share
             </Button>
-            <Button className="bg-coral hover:bg-coral-dark text-white rounded-xl">
+            <Button className="bg-coral hover:bg-coral-dark text-primary-foreground rounded-xl">
               <Download className="w-4 h-4 mr-2" />
               Download PDF
             </Button>
@@ -382,7 +382,7 @@ const SchedulePage = () => {
             <Card 
               key={event.id}
               className={`rounded-xl border-0 shadow-warm hover:shadow-lg transition-all duration-300 ${
-                index === 0 ? 'border-l-4 border-l-coral bg-coral/5' : 'bg-white'
+                index === 0 ? 'border-l-4 border-l-coral bg-coral/5' : 'bg-card'
               }`}
               role="button"
               tabIndex={0}

@@ -19,65 +19,65 @@ const Footer = () => {
     });
   };
   return (
-    <footer className="bg-foreground text-white py-16 px-4">
+    <footer className="bg-foreground text-background py-16 px-4">
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           <div className="md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 bg-coral rounded-xl flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-white" />
+                <Calendar className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold">RaceReady</span>
             </Link>
-            <p className="text-white/70 text-sm leading-relaxed">
+            <p className="text-background/70 text-sm leading-relaxed">
               Transforming meet schedules for coaches and parents. Built by coaches, for coaches.
             </p>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Product</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><Link to="/upload" className="hover:text-white transition-colors">Upload Meet</Link></li>
-              <li><a href="#features" onClick={(e) => scrollToSection(e, "features")} className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#pricing" onClick={(e) => scrollToSection(e, "pricing")} className="hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "Demo")} className="hover:text-white transition-colors">Demo</a></li>
+            <ul className="space-y-2 text-background/70">
+              <li><Link to="/upload" className="hover:text-background transition-colors">Upload Meet</Link></li>
+              <li><a href="#features" onClick={(e) => scrollToSection(e, "features")} className="hover:text-background transition-colors">Features</a></li>
+              <li><a href="#pricing" onClick={(e) => scrollToSection(e, "pricing")} className="hover:text-background transition-colors">Pricing</a></li>
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "Demo")} className="hover:text-background transition-colors">Demo</a></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Support</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "Help Center")} className="hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="mailto:support@raceready.com" className="hover:text-white transition-colors">Contact Us</a></li>
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "Status")} className="hover:text-white transition-colors">Status</a></li>
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "API Docs")} className="hover:text-white transition-colors">API Docs</a></li>
+            <ul className="space-y-2 text-background/70">
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "Help Center")} className="hover:text-background transition-colors">Help Center</a></li>
+              <li><a href="mailto:support@raceready.com" className="hover:text-background transition-colors">Contact Us</a></li>
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "Status")} className="hover:text-background transition-colors">Status</a></li>
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "API Docs")} className="hover:text-background transition-colors">API Docs</a></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold mb-4">Company</h4>
-            <ul className="space-y-2 text-white/70">
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "About")} className="hover:text-white transition-colors">About</a></li>
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "Blog")} className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "Privacy Policy")} className="hover:text-white transition-colors">Privacy</a></li>
-              <li><a href="#" onClick={(e) => handleComingSoon(e, "Terms of Service")} className="hover:text-white transition-colors">Terms</a></li>
+            <ul className="space-y-2 text-background/70">
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "About")} className="hover:text-background transition-colors">About</a></li>
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "Blog")} className="hover:text-background transition-colors">Blog</a></li>
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "Privacy Policy")} className="hover:text-background transition-colors">Privacy</a></li>
+              <li><a href="#" onClick={(e) => handleComingSoon(e, "Terms of Service")} className="hover:text-background transition-colors">Terms</a></li>
             </ul>
           </div>
         </div>
         
-        <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-white/50 text-sm">
+        <div className="border-t border-background/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-background/50 text-sm">
             © {new Date().getFullYear()} RaceReady. All rights reserved.
           </p>
           
           <div className="flex items-center gap-4">
-            <a href="mailto:hello@raceready.com" className="text-white/50 hover:text-white transition-colors" aria-label="Email">
+            <a href="mailto:hello@raceready.com" className="text-background/50 hover:text-background transition-colors" aria-label="Email">
               <Mail className="w-5 h-5" />
             </a>
             <a 
               href="#" 
               onClick={(e) => handleComingSoon(e, "Twitter")} 
-              className="text-white/50 hover:text-white transition-colors"
+              className="text-background/50 hover:text-background transition-colors"
               aria-label="Twitter"
             >
               <Twitter className="w-5 h-5" />
@@ -85,7 +85,7 @@ const Footer = () => {
             <a 
               href="#" 
               onClick={(e) => handleComingSoon(e, "LinkedIn")} 
-              className="text-white/50 hover:text-white transition-colors"
+              className="text-background/50 hover:text-background transition-colors"
               aria-label="LinkedIn"
             >
               <Linkedin className="w-5 h-5" />
