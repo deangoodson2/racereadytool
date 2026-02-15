@@ -42,7 +42,7 @@ const features = [
 
 const Features = () => {
   return (
-    <section id="features" className="py-20 px-4 bg-white">
+    <section id="features" className="py-20 px-4 bg-background">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -57,10 +57,10 @@ const Features = () => {
           {features.map((feature) => (
             <Card 
               key={feature.title}
-              className="border-0 shadow-warm hover:shadow-lg transition-all duration-300 rounded-2xl bg-sand/30 hover:bg-white group"
+              className="border-0 shadow-warm hover:shadow-lg transition-all duration-300 rounded-2xl bg-sand/30 hover:bg-card group"
             >
               <CardContent className="p-6">
-                <div className={`w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 ${feature.color}`}>
+                <div className={`w-12 h-12 rounded-xl bg-card shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 ${feature.color}`}>
                   <feature.icon className="w-6 h-6" />
                 </div>
                 

@@ -105,7 +105,7 @@ const SubscriberForm = ({ meetId }: SubscriberFormProps) => {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-ocean hover:bg-ocean-dark text-white rounded-xl whitespace-nowrap"
+            className="bg-ocean hover:bg-ocean-dark text-primary-foreground rounded-xl whitespace-nowrap"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

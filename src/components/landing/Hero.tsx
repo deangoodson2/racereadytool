@@ -18,7 +18,7 @@ const Hero = () => {
     });
   };
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-sand via-white to-ocean/10 py-20 px-4">
+    <section className="relative overflow-hidden bg-gradient-to-br from-sand via-background to-ocean/10 py-20 px-4">
       {/* Background decoration */}
       <div className="absolute top-20 right-0 w-96 h-96 bg-coral/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-ocean/10 rounded-full blur-3xl" />
@@ -26,7 +26,7 @@ const Hero = () => {
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="animate-fade-up">
-            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-ocean mb-6 shadow-warm">
+            <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-ocean mb-6 shadow-warm">
               <span className="w-2 h-2 bg-ocean rounded-full animate-pulse" />
               For swim & track coaches
             </div>
@@ -43,7 +43,7 @@ const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Link to="/upload">
-                <Button size="lg" className="bg-coral hover:bg-coral-dark text-white px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-warm transition-all duration-300">
+                <Button size="lg" className="bg-coral hover:bg-coral-dark text-primary-foreground px-8 py-6 text-lg rounded-xl shadow-soft hover:shadow-warm transition-all duration-300">
                   Upload Meet PDF
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
@@ -76,7 +76,7 @@ const Hero = () => {
           
           {/* Mock Schedule Preview */}
           <div className="relative animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <div className="bg-white rounded-2xl shadow-warm p-6 border border-border/50">
+            <div className="bg-card rounded-2xl shadow-warm p-6 border border-border/50">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-foreground">Sarah's Events</h3>
                 <span className="text-xs bg-ocean/10 text-ocean px-3 py-1 rounded-full">
@@ -107,8 +107,8 @@ const Hero = () => {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="bg-white px-2 py-1 rounded">{item.heat}</span>
-                      <span className="bg-white px-2 py-1 rounded">{item.lane}</span>
+                      <span className="bg-background px-2 py-1 rounded">{item.heat}</span>
+                      <span className="bg-background px-2 py-1 rounded">{item.lane}</span>
                     </div>
                   </div>
                 ))}
@@ -117,7 +117,7 @@ const Hero = () => {
               <div className="mt-4 pt-4 border-t border-border/50 flex gap-2">
                 <Button 
                   size="sm" 
-                  className="flex-1 bg-coral hover:bg-coral-dark text-white rounded-lg"
+                  className="flex-1 bg-coral hover:bg-coral-dark text-primary-foreground rounded-lg"
                   onClick={() => handleDemoAction("Download PDF")}
                 >
                   Download PDF
@@ -134,7 +134,7 @@ const Hero = () => {
             </div>
             
             {/* Floating badge */}
-            <div className="absolute -top-4 -right-4 bg-ocean text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg animate-float">
+            <div className="absolute -top-4 -right-4 bg-ocean text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium shadow-lg animate-float">
               ✨ Auto-highlighted
             </div>
           </div>

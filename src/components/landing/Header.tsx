@@ -23,11 +23,11 @@ const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border/50">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-10 h-10 bg-coral rounded-xl flex items-center justify-center shadow-soft">
-            <Calendar className="w-5 h-5 text-white" />
+            <Calendar className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold text-foreground">RaceReady</span>
         </Link>
@@ -62,7 +62,7 @@ const Header = () => {
             Log In
           </Button>
           <Link to="/upload">
-            <Button className="bg-coral hover:bg-coral-dark text-white rounded-xl shadow-soft hover:shadow-warm transition-all">
+            <Button className="bg-coral hover:bg-coral-dark text-primary-foreground rounded-xl shadow-soft hover:shadow-warm transition-all">
               Try Free
             </Button>
           </Link>
@@ -83,7 +83,7 @@ const Header = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-border/50 px-4 py-6 animate-fade-up">
+        <div className="md:hidden bg-background border-t border-border/50 px-4 py-6 animate-fade-up">
           <nav className="flex flex-col gap-4 mb-6">
             <a 
               href="#features" 
@@ -113,7 +113,7 @@ const Header = () => {
               Log In
             </Button>
             <Link to="/upload" className="w-full">
-              <Button className="w-full bg-coral hover:bg-coral-dark text-white rounded-xl">
+              <Button className="w-full bg-coral hover:bg-coral-dark text-primary-foreground rounded-xl">
                 Try Free
               </Button>
             </Link>

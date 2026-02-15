@@ -61,7 +61,7 @@ const Pricing = () => {
   };
 
   return (
-    <section id="pricing" className="py-20 px-4 bg-white">
+    <section id="pricing" className="py-20 px-4 bg-background">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -83,7 +83,7 @@ const Pricing = () => {
               }`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-coral text-white px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-coral text-primary-foreground px-4 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                   <Star className="w-3 h-3 fill-current" />
                   Most Popular
                 </div>
@@ -125,7 +125,7 @@ const Pricing = () => {
                     <Button 
                       className={`w-full rounded-xl py-6 ${
                         plan.popular 
-                          ? 'bg-coral hover:bg-coral-dark text-white' 
+                          ? 'bg-coral hover:bg-coral-dark text-primary-foreground' 
                           : 'bg-secondary hover:bg-secondary/80'
                       }`}
                     >

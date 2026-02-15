@@ -82,7 +82,7 @@ const UploadPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sand via-white to-ocean/10">
+    <div className="min-h-screen bg-gradient-to-br from-sand via-background to-ocean/10">
       <Header />
       
       <main className="max-w-3xl mx-auto px-4 py-12">
@@ -181,7 +181,7 @@ const UploadPage = () => {
                 
                 <Button 
                   onClick={resetUpload}
-                  className="bg-coral hover:bg-coral-dark text-white rounded-xl"
+                  className="bg-coral hover:bg-coral-dark text-primary-foreground rounded-xl"
                 >
                   Try Again
                 </Button>

@@ -60,7 +60,7 @@ const SendEmailsButton = ({ meetId, meetName }: SendEmailsButtonProps) => {
       <Button
         onClick={() => setConfirmOpen(true)}
         disabled={loading}
-        className="bg-ocean hover:bg-ocean-dark text-white rounded-xl"
+        className="bg-ocean hover:bg-ocean-dark text-primary-foreground rounded-xl"
       >
         {loading ? (
           <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
@@ -84,7 +84,7 @@ const SendEmailsButton = ({ meetId, meetName }: SendEmailsButtonProps) => {
             <Button variant="outline" onClick={() => setConfirmOpen(false)} className="rounded-xl">
               Cancel
             </Button>
-            <Button onClick={handleSend} className="bg-ocean hover:bg-ocean-dark text-white rounded-xl">
+            <Button onClick={handleSend} className="bg-ocean hover:bg-ocean-dark text-primary-foreground rounded-xl">
               <Mail className="w-4 h-4 mr-2" /> Send Now
             </Button>
           </div>

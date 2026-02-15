@@ -269,7 +269,7 @@ const CoachTools = ({ meetId, fileUrl, events, teams }: CoachToolsProps) => {
           <Button
             onClick={handleDownloadHighlightedPdf}
             disabled={!canGenerate || loadingHighlight || !fileUrl}
-            className="bg-coral hover:bg-coral-dark text-white rounded-xl flex-1"
+            className="bg-coral hover:bg-coral-dark text-primary-foreground rounded-xl flex-1"
           >
             {loadingHighlight ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
